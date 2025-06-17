@@ -22,8 +22,16 @@ export default function MapComponent({ location, places }) {
         <Popup>You are here</Popup>
       </Marker>
       {places.map((place, i) => (
-        <Marker key={i} position={[place.lat, place.lon]} icon={markerIcon}>
-          <Popup>{place.tags?.name || "Unnamed"}</Popup>
+        <Marker
+          key={i}
+          position={[place.lat, place.lon]}
+          icon={markerIcon}
+        >
+          <Popup>
+            <strong>{place.tags.name || "Unnamed Place"}</strong>
+            <br />
+            {place.tags.amenity || "No type info"}
+          </Popup>
         </Marker>
       ))}
     </MapContainer>

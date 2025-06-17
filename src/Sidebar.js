@@ -1,7 +1,7 @@
 import React from "react";
 import './Sidebar.css';
 
-export default function Sidebar({ isOpen, onClose, places }) {
+export default function Sidebar({ isOpen, onClose, places, onSelect }) {
   return (
     <div className={`sidebar ${isOpen ? "open" : ""}`}>
       <div className="sidebar-header">
@@ -13,8 +13,15 @@ export default function Sidebar({ isOpen, onClose, places }) {
           <p>No results found.</p>
         ) : (
           places.map((place, index) => (
-            <div key={index} className="place-item">
-              {place.tags?.name || "Unnamed Place"}
+            <div
+              key={index}
+              className="place-item"
+              onClick={() => onSelect(place)}
+            >
+              <strong>{place.tags.name || "Unnamed Place"}</strong>
+              <div className="place-meta">
+                {place.tags.amenity && <span>{place.tags.amenity}</span>}
+              </div>
             </div>
           ))
         )}
