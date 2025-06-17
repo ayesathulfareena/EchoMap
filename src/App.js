@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import MapComponent from "./MapComponent";
 import Sidebar from "./Sidebar";
 import "./App.css";
+import haversine from "haversine-distance";
 
 export default function App() {
   const [location, setLocation] = useState(null);
@@ -23,19 +24,40 @@ export default function App() {
   }, []);
 
   // Fetch places when query is submitted
-  const fetchPlaces = async () => {
-    if (!location || !query) return;
-    const overpassUrl = `https://overpass-api.de/api/interpreter?data=[out:json];node(around:3000,${location.lat},${location.lon})[name~"${query}",i];out;`;
-    try {
-      const res = await fetch(overpassUrl);
-      const data = await res.json();
-      setPlaces(data.elements || []);
-      setIsSidebarOpen(true);
-    } catch (err) {
-      console.error("Failed to fetch:", err);
-    }
-  };
-
+  // Replace fetchPlaces(...) with:
+const fetchPlaces = async () => {
+  if (!location || !query) return;
+  
+  // Overpass query for name and amenities
+  const q = `
+    [out:json];
+    (
+      node["name"~"${query}",i](around:3000,${location.lat},${location.lon});
+      node["amenity"~"${query}",i](around:3000,${location.lat},${location.lon});
+    );
+    out body;
+  `;
+  
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST", body: q
+    });
+    const data = await res.json();
+    const mapped = (data.elements || []).map(el => ({
+      lat: el.lat,
+      lon: el.lon,
+      tags: el.tags || {},
+      distance: (haversine(
+        { lat: location.lat, lon: location.lon },
+        { lat: el.lat, lon: el.lon },
+      ) / 1000).toFixed(2), // in km
+    }));
+    setPlaces(mapped);
+    setIsSidebarOpen(true);
+  } catch (e) {
+    console.error("Search failed:", e);
+  }
+};
   const handleKeyDown = (e) => {
     if (e.key === "Enter") fetchPlaces();
   };

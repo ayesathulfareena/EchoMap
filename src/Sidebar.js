@@ -12,15 +12,16 @@ export default function Sidebar({ isOpen, onClose, places, onSelect }) {
         {places.length === 0 ? (
           <p>No results found.</p>
         ) : (
-          places.map((place, index) => (
+          places.map((p, i) => (
             <div
-              key={index}
+              key={i}
               className="place-item"
-              onClick={() => onSelect(place)}
+              onClick={() => onSelect(p)}
             >
-              <strong>{place.tags.name || "Unnamed Place"}</strong>
+              <strong>{p.tags.name || "Unnamed Place"}</strong>
               <div className="place-meta">
-                {place.tags.amenity && <span>{place.tags.amenity}</span>}
+                {p.tags.amenity && <span>{p.tags.amenity}</span>}
+                <span>• {p.distance} km away</span>
               </div>
             </div>
           ))
