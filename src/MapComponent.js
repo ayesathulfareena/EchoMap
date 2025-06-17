@@ -9,29 +9,18 @@ const markerIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 
-export default function MapComponent({ location, places }) {
-  if (!location) return <div className="map-loading">Loading map...</div>;
+export default function MapComponent({ locations: { location, places } }) {
+  if (!location) return <div>Loading map...</div>;
 
   return (
-    <MapContainer center={[location.lat, location.lon]} zoom={13} className="map">
-      <TileLayer
-        attribution='&copy; <a href="https://osm.org/copyright">OSM</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+    <MapContainer center={[location.lat, location.lon]} zoom={12} className="map">
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <Marker position={[location.lat, location.lon]} icon={markerIcon}>
-        <Popup>You are here</Popup>
+        <Popup>Your Location</Popup>
       </Marker>
-      {places.map((place, i) => (
-        <Marker
-          key={i}
-          position={[place.lat, place.lon]}
-          icon={markerIcon}
-        >
-          <Popup>
-            <strong>{place.tags.name || "Unnamed Place"}</strong>
-            <br />
-            {place.tags.amenity || "No type info"}
-          </Popup>
+      {places.map((p, idx) => (
+        <Marker key={idx} position={[p.lat, p.lon]} icon={markerIcon}>
+          <Popup>{p.tags.name || "Unnamed"}</Popup>
         </Marker>
       ))}
     </MapContainer>
