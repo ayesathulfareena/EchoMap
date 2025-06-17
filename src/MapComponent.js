@@ -21,13 +21,12 @@ const reverseGeocode = async (lat, lon) => {
     });
 
     const address = res.data.address;
-    const road = address.road || "";
-    const village = address.village || address.town || address.city || "";
-    const district = address.county || address.suburb || "";
-    const state = address.state || "";
+const road = address.road || "";
+const village = address.village || address.town || address.city || "";
+const district = address.county || "";
+const state = address.state || "";
 
-    // Return a short, clean address
-    return [road, village, district, state].filter(Boolean).join(", ");
+return [road, village, district, state].filter(Boolean).join(", ");
     
   } catch (e) {
     return "Address not available";
