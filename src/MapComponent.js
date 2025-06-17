@@ -13,11 +13,7 @@ export default function MapComponent({ location, places }) {
   if (!location) return <div className="map-loading">Loading map...</div>;
 
   return (
-    <MapContainer
-      center={[location.lat, location.lon]}
-      zoom={13}
-      className="map"
-    >
+    <MapContainer center={[location.lat, location.lon]} zoom={13} className="map">
       <TileLayer
         attribution='&copy; <a href="https://osm.org/copyright">OSM</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -26,15 +22,10 @@ export default function MapComponent({ location, places }) {
         <Popup>You are here</Popup>
       </Marker>
       {places.map((place, i) => (
-        <Marker
-          key={i}
-          position={[place.lat, place.lon]}
-          icon={markerIcon}
-        >
-          <Popup>{place.tags.name || "Unnamed"}</Popup>
+        <Marker key={i} position={[place.lat, place.lon]} icon={markerIcon}>
+          <Popup>{place.tags?.name || "Unnamed"}</Popup>
         </Marker>
       ))}
     </MapContainer>
   );
 }
-

@@ -14,7 +14,7 @@ export default function Sidebar({ isOpen, onClose, places }) {
         ) : (
           places.map((place, index) => (
             <div key={index} className="place-item">
-              {place.tags.name || "Unnamed Place"}
+              {place.tags?.name || "Unnamed Place"}
             </div>
           ))
         )}

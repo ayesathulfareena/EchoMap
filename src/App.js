@@ -1,85 +1,61 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
+import React, { useEffect, useState } from "react";
 import MapComponent from "./MapComponent";
 import Sidebar from "./Sidebar";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import "./App.css";
 
 function App() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [results, setResults] = useState([]);
   const [location, setLocation] = useState(null);
+  const [places, setPlaces] = useState([]);
+  const [query, setQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    toast.info("📍 Please enable location for accurate results", {
-      position: "top-center",
-      autoClose: 3000,
-    });
-
-    if (!navigator.geolocation) {
-      alert("Geolocation not supported");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) =>
-        setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => toast.error("Enable location access in browser")
-    );
+    const getLocation = () => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        },
+        async () => {
+          // fallback to IP-based location
+          try {
+            const res = await fetch("https://ipapi.co/json/");
+            const data = await res.json();
+            setLocation({ lat: data.latitude, lon: data.longitude });
+          } catch (err) {
+            console.error("Location access denied and IP lookup failed", err);
+          }
+        }
+      );
+    };
+    getLocation();
   }, []);
 
-  const handleSearch = async () => {
-    if (!searchTerm || !location) return;
-
-    const radius = 10000;
-    const query = `
-      [out:json];
-      (
-        node["name"~"${searchTerm}",i](around:${radius},${location.lat},${location.lon});
-        node["amenity"~"${searchTerm}",i](around:${radius},${location.lat},${location.lon});
-      );
-      out body;
-    `;
-
-    const response = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      body: query,
-    });
-
+  const fetchPlaces = async () => {
+    if (!query || !location) return;
+    const response = await fetch(
+      `https://overpass-api.de/api/interpreter?data=[out:json];node[amenity=${query}](around:5000,${location.lat},${location.lon});out;`
+    );
     const data = await response.json();
-    setResults(data.elements);
-    if (data.elements.length > 0) setSidebarOpen(true);
+    setPlaces(data.elements);
+    setSidebarOpen(true);
   };
 
   return (
     <div className="app">
-      <ToastContainer />
-      {/* 🔍 Search bar */}
       <div className="search-bar">
         <input
           type="text"
-          placeholder="Search hospitals, cafes, etc..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search for nearby (e.g., hospital, cafe)"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
         />
-        <button onClick={handleSearch}>Search</button>
+        <button onClick={fetchPlaces}>Search</button>
       </div>
-
-      {/* 🌍 Map */}
-      <MapComponent location={location} places={results} />
-
-      {/* ⋮ Three-dot icon */}
       <button className="menu-btn" onClick={() => setSidebarOpen(true)}>
-        ⋮
+        ☰
       </button>
-
-      {/* 📦 Slide-in panel */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        places={results}
-      />
+      <MapComponent location={location} places={places} />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} places={places} />
     </div>
   );
 }
