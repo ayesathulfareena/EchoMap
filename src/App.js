@@ -29,14 +29,14 @@ const fetchPlaces = async () => {
   if (!location || !query) return;
   
   // Overpass query for name and amenities
-  const q = `
-    [out:json];
-    (
-      node["name"~"${query}",i](around:3000,${location.lat},${location.lon});
-      node["amenity"~"${query}",i](around:3000,${location.lat},${location.lon});
-    );
-    out body;
-  `;
+ const overpassQuery = `
+  [out:json];
+  (
+    node["name"~"${query}",i](around:50000,${location.lat},${location.lon});
+    node["amenity"~"${query}",i](around:50000,${location.lat},${location.lon});
+  );
+  out body;
+`;
   
   try {
     const res = await fetch("https://overpass-api.de/api/interpreter", {
@@ -57,7 +57,7 @@ const fetchPlaces = async () => {
   } catch (e) {
     console.error("Search failed:", e);
   }
-};
+}; 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") fetchPlaces();
   };
