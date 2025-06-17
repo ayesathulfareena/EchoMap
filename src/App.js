@@ -1,71 +1,38 @@
-import React, { useState, useEffect } from "react"; 
-import './App.css';
-import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
-import Sidebar from "./Sidebar";
+import React, { useState, useEffect } from "react";
+import "./App.css";
 import MapComponent from "./MapComponent";
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-function RecenterMap({ lat, lon }) {
-  const map = useMap();
-  useEffect(() => {
-    if (lat && lon) {
-      map.setView([lat, lon], 13);
-    }
-  }, [lat, lon, map]);
-  return null;
-}
-
-function getRadiusForSearch(term) {
-  const lowerTerm = term.toLowerCase();
-  if (lowerTerm.includes("restaurant") || lowerTerm.includes("shop")) return 5000;
-  if (lowerTerm.includes("doctor") || lowerTerm.includes("hospital")) return 8000;
-  if (lowerTerm.includes("tourist") || lowerTerm.includes("attraction")) return 20000;
-  if (lowerTerm.includes("emergency")) return 3000;
-  return 10000;
-}
+import Sidebar from "./Sidebar";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
-  const [selectedPlace, setSelectedPlace] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [location, setLocation] = useState(null);
   const [results, setResults] = useState([]);
+  const [location, setLocation] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // ✅ Toast for location access
   useEffect(() => {
-    toast.info("📍 Please enable location services for accurate address", {
+    toast.info("📍 Please enable location for accurate results", {
       position: "top-center",
-      autoClose: 5000,
+      autoClose: 3000,
     });
-  }, []);
 
-  // 🌍 Get user location
-  useEffect(() => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
+      alert("Geolocation not supported");
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        });
-      },
-      () => {
-        alert("Please enable location access in your browser to use this app.");
-      }
+      (pos) =>
+        setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => toast.error("Enable location access in browser")
     );
   }, []);
 
-  // 🔍 Search nearby
   const handleSearch = async () => {
-    if (!location || !searchTerm) return;
-    const radius = getRadiusForSearch(searchTerm);
+    if (!searchTerm || !location) return;
 
+    const radius = 10000;
     const query = `
       [out:json];
       (
@@ -79,42 +46,40 @@ function App() {
       method: "POST",
       body: query,
     });
+
     const data = await response.json();
     setResults(data.elements);
+    if (data.elements.length > 0) setSidebarOpen(true);
   };
 
-  const markerIcon = new L.Icon({
-    iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-  });
-
   return (
-    <div className="App">
-      <ToastContainer /> {/* ✅ Put this at the top of your JSX */}
-      <h1>FindMate</h1>
-
-      <input
-        type="text"
-        placeholder="Search for hospitals, gyms, etc..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="search-input"
-      />
-      <button onClick={handleSearch}>Search</button>
-
-      <div style={{ display: 'flex' }}>
-        {location && (
-          <>
-            <Sidebar places={results} selectedPlace={selectedPlace} />
-            <MapComponent
-              location={location}
-              places={results}
-              onMarkerClick={(place) => setSelectedPlace(place)}
-            />
-          </>
-        )}
+    <div className="app">
+      <ToastContainer />
+      {/* 🔍 Search bar */}
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="Search hospitals, cafes, etc..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button onClick={handleSearch}>Search</button>
       </div>
+
+      {/* 🌍 Map */}
+      <MapComponent location={location} places={results} />
+
+      {/* ⋮ Three-dot icon */}
+      <button className="menu-btn" onClick={() => setSidebarOpen(true)}>
+        ⋮
+      </button>
+
+      {/* 📦 Slide-in panel */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        places={results}
+      />
     </div>
   );
 }
