@@ -3,6 +3,7 @@ import "./App.css";
 import SearchBar from "./SearchBar";
 import NearbyResults from "./NearbyResults";
 import MapComponent from "./MapComponent";
+import haversine from "./utils/haversine";
 
 function App() {
   const [query, setQuery] = useState("");
@@ -12,16 +13,18 @@ function App() {
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
-      pos => setLocation({
-        lat: pos.coords.latitude,
-        lon: pos.coords.longitude
-      }),
+      pos =>
+        setLocation({
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+        }),
       () => alert("Enable location services to use this app.")
     );
   }, []);
 
   const handleSearch = async () => {
     if (!location || !query) return;
+
     const q = `
       [out:json][timeout:25];
       (
@@ -30,46 +33,42 @@ function App() {
       );
       out body;
     `;
+
     try {
       const res = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST", body: q
+        method: "POST",
+        body: q,
       });
       const data = await res.json();
-      setPlaces(
-        (data.elements || []).map(el => ({
-          lat: el.lat,
-          lon: el.lon,
-          tags: el.tags || {},
-          distance: ((el.dist) || (
-            haversine(
-              { lat: location.lat, lon: location.lon },
-              { lat: el.lat, lon: el.lon }
-            ) / 1000
-          )).toFixed(2)
-        }))
-      );
+      const enrichedPlaces = (data.elements || []).map(el => ({
+        lat: el.lat,
+        lon: el.lon,
+        tags: el.tags || {},
+        distance: haversine(
+          { lat: location.lat, lon: location.lon },
+          { lat: el.lat, lon: el.lon }
+        ).toFixed(2),
+      }));
+
+      setPlaces(enrichedPlaces);
       setSidebarOpen(true);
-    } catch (e) {
-      console.error("Search error:", e);
+    } catch (err) {
+      console.error("Search error:", err);
     }
   };
 
   return (
     <div className="app">
-      <SearchBar
-        value={query}
-        onChange={s => setQuery(s)}
-        onSearch={handleSearch}
-      />
+      <SearchBar value={query} onChange={setQuery} onSearch={handleSearch} />
       <div className="main-container">
-        {location &&
-          <MapComponent locations={{ location, places }} />
-        }
+        {location && <MapComponent locations={{ location, places }} />}
         <NearbyResults
           places={places}
           isOpen={isSidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          onSelect={p => alert(`Selected: ${p.tags.name || "Unnamed"}, ${p.distance} km`)}
+          onSelect={p =>
+            alert(`Selected: ${p.tags.name || "Unnamed"}, ${p.distance} km`)
+          }
         />
       </div>
     </div>

@@ -8,8 +8,8 @@ export default function SearchBar({ value, onChange, onSearch }) {
         type="search"
         placeholder="Search hospitals, gyms, hotels..."
         value={value}
-        onChange={e => onChange(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && onSearch()}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && onSearch()}
       />
       <button onClick={onSearch}>Search</button>
     </div>
