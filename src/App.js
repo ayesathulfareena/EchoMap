@@ -11,30 +11,16 @@ function App() {
   const [places, setPlaces] = useState([]);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
+ useEffect(() => {
   navigator.geolocation.getCurrentPosition(
-    async pos => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
-
-      // Use OpenStreetMap Nominatim reverse to verify and adjust location
-      try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
-        const data = await response.json();
-
-        // Update only if OpenStreetMap returns valid coordinates
-        if (data && data.lat && data.lon) {
-          setLocation({ lat: parseFloat(data.lat), lon: parseFloat(data.lon) });
-        } else {
-          // fallback to browser geolocation
-          setLocation({ lat, lon });
-        }
-      } catch (error) {
-        // fallback to browser geolocation
-        setLocation({ lat, lon });
-      }
+    pos => {
+      setLocation({
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude
+      });
     },
-    () => alert("Enable location services to use this app.")
+    () => alert("Enable location services to use this app."),
+    { enableHighAccuracy: true, timeout: 10000 }
   );
 }, []);
       
