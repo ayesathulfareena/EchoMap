@@ -13,20 +13,23 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeniedWarning, setShowDeniedWarning] = useState(false);
 
-  // 🌍 Get user location or fallback
+  // Get user location
   useEffect(() => {
     if (navigator.geolocation) {
+      setIsLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation({ lat: latitude, lng: longitude });
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
           setIsLoading(false);
         },
         (error) => {
           console.warn("Location access denied. Using default location.");
           setUserLocation({ lat: 13.0827, lng: 80.2707 }); // Default: Chennai
-          setIsLoading(false);
           setShowDeniedWarning(true);
+          setIsLoading(false);
         },
         {
           enableHighAccuracy: true,
@@ -36,74 +39,74 @@ function App() {
       );
     } else {
       setUserLocation({ lat: 13.0827, lng: 80.2707 });
-      setIsLoading(false);
       setShowDeniedWarning(true);
+      setIsLoading(false);
     }
   }, []);
 
-  // 🔍 Search handler
- const handleSearch = async () => {
-  if (!userLocation || !query) return;
+  // Handle search and show unlimited nearby results
+  const handleSearch = async () => {
+    if (!userLocation || !query) return;
 
-  setIsLoading(true);
+    setIsLoading(true);
+    setPlaces([]);
 
-  const radii = [2000, 5000, 10000, 25000, 50000, 100000]; // Start nearby, go broader
-  const fetched = new Map();
+    const fetched = new Map();
+    const radiusSteps = [2000, 5000, 10000, 25000, 50000, 100000, 150000, 200000];
 
-  for (const radius of radii) {
-    const q = `
-      [out:json][timeout:25];
-      (
-        node["name"~"${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
-        node["amenity"~"${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
-        node["shop"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
-        node["leisure"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
-        node["tourism"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
-      );
-      out body;
-    `;
+    for (const radius of radiusSteps) {
+      const queryString = `
+        [out:json][timeout:25];
+        (
+          node["name"~"${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+          node["amenity"~"${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+          node["shop"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+          node["leisure"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+          node["tourism"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+        );
+        out body;
+      `;
 
-    try {
-      const res = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: q,
-      });
+      try {
+        const response = await fetch("https://overpass-api.de/api/interpreter", {
+          method: "POST",
+          body: queryString,
+        });
 
-      const data = await res.json();
-
-      for (const el of data.elements || []) {
-        const key = `${el.lat}_${el.lon}`;
-        if (!fetched.has(key)) {
-          fetched.set(key, {
-            lat: el.lat,
-            lon: el.lon,
-            tags: el.tags || {},
-            distance: haversine(
-              { lat: userLocation.lat, lon: userLocation.lng },
-              { lat: el.lat, lon: el.lon }
-            ),
-          });
+        const data = await response.json();
+        for (const el of data.elements || []) {
+          const key = `${el.lat}_${el.lon}`;
+          if (!fetched.has(key)) {
+            fetched.set(key, {
+              lat: el.lat,
+              lon: el.lon,
+              tags: el.tags || {},
+              distance: haversine(
+                { lat: userLocation.lat, lon: userLocation.lng },
+                { lat: el.lat, lon: el.lon }
+              ),
+            });
+          }
         }
+
+        // Optional: remove break to get ALL results, not just 10
+        // if (fetched.size >= 10) break;
+      } catch (error) {
+        console.error("Error fetching data:", error);
       }
-
-      // Stop early if we get 10+ places
-      if (fetched.size >= 10) break;
-
-    } catch (err) {
-      console.error("Search failed at radius:", radius, err);
     }
-  }
 
-  // Convert to array, sort by distance, format
-  const results = Array.from(fetched.values())
-    .sort((a, b) => a.distance - b.distance)
-    .map(p => ({ ...p, distance: p.distance.toFixed(2) }));
+    const sorted = Array.from(fetched.values())
+      .sort((a, b) => a.distance - b.distance)
+      .map((place) => ({
+        ...place,
+        distance: place.distance.toFixed(2),
+      }));
 
-  setPlaces(results);
-  setSidebarOpen(true);
-  setIsLoading(false);
-};
-
+    setPlaces(sorted);
+    setSidebarOpen(true);
+    setIsLoading(false);
+  };
 
   return (
     <div className="app">
@@ -115,11 +118,9 @@ function App() {
         </div>
       )}
 
-      {!isLoading && (
+      {!isLoading && userLocation && (
         <div className="main-container">
-          {userLocation && (
-            <MapComponent locations={{ location: userLocation, places }} />
-          )}
+          <MapComponent locations={{ location: userLocation, places }} />
           <NearbyResults
             places={places}
             isOpen={isSidebarOpen}
@@ -134,8 +135,8 @@ function App() {
       {showDeniedWarning && (
         <div className="location-warning-overlay">
           <div className="location-warning-modal">
-            <h2>Location Access Denied</h2>
-            <p>Echo Map is using default location (Chennai) for results.</p>
+            <h2>📍 Location Access Denied</h2>
+            <p>Echo Map is using default location (Chennai).</p>
             <button onClick={() => window.location.reload()}>Retry</button>
           </div>
         </div>
