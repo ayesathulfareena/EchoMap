@@ -42,19 +42,23 @@ function App() {
   }, []);
 
   // 🔍 Search handler
-  const handleSearch = async () => {
-    if (!userLocation || !query) return;
+ const handleSearch = async () => {
+  if (!userLocation || !query) return;
 
-    setIsLoading(true); // Start loading
+  setIsLoading(true);
 
+  const radii = [2000, 5000, 10000, 25000, 50000, 100000]; // Start nearby, go broader
+  const fetched = new Map();
+
+  for (const radius of radii) {
     const q = `
       [out:json][timeout:25];
       (
-        node["name"~"${query}",i](around:100000,${userLocation.lat},${userLocation.lng});
-        node["amenity"~"${query}",i](around:100000,${userLocation.lat},${userLocation.lng});
-        node["shop"~="${query}",i](around:100000,${userLocation.lat},${userLocation.lng});
-        node["leisure"~="${query}",i](around:100000,${userLocation.lat},${userLocation.lng});
-        node["tourism"~="${query}",i](around:100000,${userLocation.lat},${userLocation.lng});
+        node["name"~"${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+        node["amenity"~"${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+        node["shop"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+        node["leisure"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
+        node["tourism"~="${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
       );
       out body;
     `;
@@ -67,31 +71,39 @@ function App() {
 
       const data = await res.json();
 
-      let enrichedPlaces = (data.elements || []).map((el) => ({
-        lat: el.lat,
-        lon: el.lon,
-        tags: el.tags || {},
-        distance: haversine(
-          { lat: userLocation.lat, lon: userLocation.lng },
-          { lat: el.lat, lon: el.lon }
-        ),
-      }));
+      for (const el of data.elements || []) {
+        const key = `${el.lat}_${el.lon}`;
+        if (!fetched.has(key)) {
+          fetched.set(key, {
+            lat: el.lat,
+            lon: el.lon,
+            tags: el.tags || {},
+            distance: haversine(
+              { lat: userLocation.lat, lon: userLocation.lng },
+              { lat: el.lat, lon: el.lon }
+            ),
+          });
+        }
+      }
 
-      enrichedPlaces.sort((a, b) => a.distance - b.distance);
+      // Stop early if we get 10+ places
+      if (fetched.size >= 10) break;
 
-      enrichedPlaces = enrichedPlaces.map((place) => ({
-        ...place,
-        distance: place.distance.toFixed(2),
-      }));
-
-      setPlaces(enrichedPlaces);
-      setSidebarOpen(true);
     } catch (err) {
-      console.error("Search error:", err);
-    } finally {
-      setIsLoading(false); // Done loading
+      console.error("Search failed at radius:", radius, err);
     }
-  };
+  }
+
+  // Convert to array, sort by distance, format
+  const results = Array.from(fetched.values())
+    .sort((a, b) => a.distance - b.distance)
+    .map(p => ({ ...p, distance: p.distance.toFixed(2) }));
+
+  setPlaces(results);
+  setSidebarOpen(true);
+  setIsLoading(false);
+};
+
 
   return (
     <div className="app">
