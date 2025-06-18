@@ -32,7 +32,7 @@ function App() {
     } else {
       console.log("Geolocation not supported.");
     }
-  }, []);
+  }, []);       
 
   const handleSearch = async () => {
     if (!userLocation || !query) return;
@@ -40,8 +40,8 @@ function App() {
     const q = `
       [out:json][timeout:25];
       (
-        node["name"~"${query}",i](around:50000,${userLocation.lat},${userLocation.lon});
-        node["amenity"~"${query}",i](around:50000,${userLocation.lat},${userLocation.lon});
+        node["name"~"${query}",i](around:1000000,${userLocation.lat},${userLocation.lon});
+        node["amenity"~"${query}",i](around:1000000,${userLocation.lat},${userLocation.lon});
       );
       out body;
     `;
