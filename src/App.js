@@ -35,40 +35,54 @@ function App() {
   }, []);       
 
   const handleSearch = async () => {
-    if (!userLocation || !query) return;
+  if (!UserLocation || !query) return;
 
-    const q = `
-      [out:json][timeout:25];
-      (
-        node["name"~"${query}",i](around:1000000,${userLocation.lat},${userLocation.lon});
-        node["amenity"~"${query}",i](around:1000000,${userLocation.lat},${userLocation.lon});
-      );
-      out body;
-    `;
+  const q = `
+    [out:json][timeout:25];
+    (
+      node["name"~"${query}",i](around:100000,${UserLocation.lat},${UserLocation.lng});
+      node["amenity"~"${query}",i](around:100000,${UserLocation.lat},${UserLocation.lng});
+      node["shop"~"${query}",i](around:100000,${UserLocation.lat},${UserLocation.lng});
+      node["leisure"~="${query}",i](around:100000,${UserLocation.lat},${UserLocation.lng});
+      node["tourism"~="${query}",i](around:100000,${UserLocation.lat},${UserLocation.lng});
+    );
+    out body;
+  `;
 
-    try {
-      const res = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: q,
-      });
-      const data = await res.json();
-      const enrichedPlaces = (data.elements || []).map((el) => ({
-        lat: el.lat,
-        lon: el.lon,
-        tags: el.tags || {},
-        distance: haversine(
-          { lat: userLocation.lat, lon: userLocation.lon },
-          { lat: el.lat, lon: el.lon }
-        ).toFixed(2),
-      }));
+  try {
+    const res = await fetch("https://overpass-api.de/api/interpreter", {
+      method: "POST",
+      body: q,
+    });
 
-      setPlaces(enrichedPlaces);
-      setSidebarOpen(true);
-    } catch (err) {
-      console.error("Search error:", err);
-    }
-  };
+    const data = await res.json();
 
+    // Enrich with distance
+    let enrichedPlaces = (data.elements || []).map(el => ({
+      lat: el.lat,
+      lon: el.lon,
+      tags: el.tags || {},
+      distance: haversine(
+        { lat: UserLocation.lat, lon: UserLocation.lng },
+        { lat: el.lat, lon: el.lon }
+      ),
+    }));
+
+    // Sort by ascending distance
+    enrichedPlaces.sort((a, b) => a.distance - b.distance);
+
+    // Convert to 2 decimal places for display
+    enrichedPlaces = enrichedPlaces.map(place => ({
+      ...place,
+      distance: place.distance.toFixed(2),
+    }));
+
+    setPlaces(enrichedPlaces);
+    setSidebarOpen(true);
+  } catch (err) {
+    console.error("Search error:", err);
+  }
+};
   return (
     <div className="app">
       <SearchBar value={query} onChange={setQuery} onSearch={handleSearch} />
