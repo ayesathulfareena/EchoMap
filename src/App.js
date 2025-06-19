@@ -13,23 +13,20 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeniedWarning, setShowDeniedWarning] = useState(false);
 
-  // Get user location
+  // Get user location or fallback to Chennai
   useEffect(() => {
     if (navigator.geolocation) {
-      setIsLoading(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ lat: latitude, lng: longitude });
           setIsLoading(false);
         },
         (error) => {
           console.warn("Location access denied. Using default location.");
-          setUserLocation({ lat: 13.0827, lng: 80.2707 }); // Default: Chennai
-          setShowDeniedWarning(true);
+          setUserLocation({ lat: 13.0827, lng: 80.2707 }); // Chennai fallback
           setIsLoading(false);
+          setShowDeniedWarning(true);
         },
         {
           enableHighAccuracy: true,
@@ -39,24 +36,25 @@ function App() {
       );
     } else {
       setUserLocation({ lat: 13.0827, lng: 80.2707 });
-      setShowDeniedWarning(true);
       setIsLoading(false);
+      setShowDeniedWarning(true);
     }
   }, []);
 
-  // Handle search and show unlimited nearby results
   const handleSearch = async () => {
-    if (!userLocation || !query) return;
-
     setIsLoading(true);
-    setPlaces([]);
 
+    if (!userLocation || !query) {
+      setIsLoading(false);
+      return;
+    }
+
+    const radii = [2000, 5000, 10000, 25000, 50000, 100000];
     const fetched = new Map();
-    const radiusSteps = [2000, 5000, 10000, 25000, 50000, 100000, 150000, 200000];
 
-    for (const radius of radiusSteps) {
-      const queryString = `
-        [out:json][timeout:25];
+    for (const radius of radii) {
+      const q = `
+        [out:json][timeout:60];
         (
           node["name"~"${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
           node["amenity"~"${query}",i](around:${radius},${userLocation.lat},${userLocation.lng});
@@ -68,12 +66,12 @@ function App() {
       `;
 
       try {
-        const response = await fetch("https://overpass-api.de/api/interpreter", {
+        const res = await fetch("https://overpass-api.de/api/interpreter", {
           method: "POST",
-          body: queryString,
+          body: q,
         });
 
-        const data = await response.json();
+        const data = await res.json();
         for (const el of data.elements || []) {
           const key = `${el.lat}_${el.lon}`;
           if (!fetched.has(key)) {
@@ -88,22 +86,20 @@ function App() {
             });
           }
         }
-
-        // Optional: remove break to get ALL results, not just 10
-        // if (fetched.size >= 10) break;
-      } catch (error) {
-        console.error("Error fetching data:", error);
+        // 👇 NO break — continue collecting results from all radii
+      } catch (err) {
+        console.error("Overpass fetch error:", err);
       }
     }
 
-    const sorted = Array.from(fetched.values())
+    const results = Array.from(fetched.values())
       .sort((a, b) => a.distance - b.distance)
-      .map((place) => ({
-        ...place,
-        distance: place.distance.toFixed(2),
+      .map((p) => ({
+        ...p,
+        distance: p.distance.toFixed(2),
       }));
 
-    setPlaces(sorted);
+    setPlaces(results);
     setSidebarOpen(true);
     setIsLoading(false);
   };
@@ -118,9 +114,11 @@ function App() {
         </div>
       )}
 
-      {!isLoading && userLocation && (
+      {!isLoading && (
         <div className="main-container">
-          <MapComponent locations={{ location: userLocation, places }} />
+          {userLocation && (
+            <MapComponent locations={{ location: userLocation, places }} />
+          )}
           <NearbyResults
             places={places}
             isOpen={isSidebarOpen}
@@ -135,8 +133,8 @@ function App() {
       {showDeniedWarning && (
         <div className="location-warning-overlay">
           <div className="location-warning-modal">
-            <h2>📍 Location Access Denied</h2>
-            <p>Echo Map is using default location (Chennai).</p>
+            <h2>Location Access Denied</h2>
+            <p>Echo Map is using default location (Chennai) for results.</p>
             <button onClick={() => window.location.reload()}>Retry</button>
           </div>
         </div>
