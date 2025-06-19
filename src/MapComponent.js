@@ -13,11 +13,13 @@ export default function MapComponent({ locations: { location, places } }) {
   if (!location) return <div>Loading map...</div>;
 
   return (
-    <MapContainer center={[location.lat, location.lon]} zoom={12} className="map">
+    <MapContainer center={[location.lat, location.lng]} zoom={12} className="map">
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <Marker position={[location.lat, location.lon]} icon={markerIcon}>
+      
+      <Marker position={[location.lat, location.lng]} icon={markerIcon}>
         <Popup>Your Location</Popup>
       </Marker>
+
       {places.map((p, idx) => (
         <Marker key={idx} position={[p.lat, p.lon]} icon={markerIcon}>
           <Popup>{p.tags.name || "Unnamed"}</Popup>
