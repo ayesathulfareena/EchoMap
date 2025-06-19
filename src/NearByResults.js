@@ -17,7 +17,7 @@ export default function NearbyResults({ places, isOpen, onClose, onSelect }) {
               <strong>{p.tags.name || "Unnamed"}</strong>
               <div className="place-meta">
                 {p.tags.amenity && <span>{p.tags.amenity}</span>}
-                <span>• {p.distance} km away</span>
+                <span> • {p.distance} km away</span>
               </div>
             </div>
           ))

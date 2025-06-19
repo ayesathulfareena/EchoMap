@@ -7,14 +7,12 @@
   height: 100%;
   background: #fff;
   z-index: 2000;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2); 
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
   transition: right 0.3s ease;
 }
-
 .sidebar.open {
   right: 0;
 }
-
 .sidebar-header {
   display: flex;
   justify-content: space-between;
@@ -22,24 +20,20 @@
   background: #f8f8f8;
   border-bottom: 1px solid #ddd;
 }
-
 .sidebar-content {
   padding: 15px;
   overflow-y: auto;
   max-height: calc(100vh - 60px);
 }
-
 .place-item {
   padding: 8px;
   border-bottom: 1px solid #eee;
   cursor: pointer;
   transition: background 0.2s;
 }
-
 .place-item:hover {
   background-color: #f0f8ff;
 }
-
 .place-meta {
   font-size: 0.85rem;
   color: #777;

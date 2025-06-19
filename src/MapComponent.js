@@ -10,19 +10,20 @@ const markerIcon = new L.Icon({
 });
 
 export default function MapComponent({ locations: { location, places } }) {
-  if (!location) return <div>Loading map...</div>;
+  if (!location) return <div className="map-loading">Loading map...</div>;
 
   return (
-    <MapContainer center={[location.lat, location.lng]} zoom={12} className="map">
+    <MapContainer center={[location.lat, location.lon]} zoom={12} className="map">
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      
-      <Marker position={[location.lat, location.lng]} icon={markerIcon}>
+      <Marker position={[location.lat, location.lon]} icon={markerIcon}>
         <Popup>Your Location</Popup>
       </Marker>
-
       {places.map((p, idx) => (
-        <Marker key={idx} position={[p.lat, p.lng]} icon={markerIcon}>
-          <Popup>{p.tags.name || "Unnamed"}</Popup>
+        <Marker key={idx} position={[p.lat, p.lon]} icon={markerIcon}>
+          <Popup>
+            <strong>{p.tags.name || "Unnamed"}</strong><br />
+            {p.distance} km away
+          </Popup>
         </Marker>
       ))}
     </MapContainer>
