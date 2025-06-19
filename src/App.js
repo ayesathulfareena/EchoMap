@@ -13,42 +13,50 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeniedWarning, setShowDeniedWarning] = useState(false);
 
-  // Get user location or fallback to Chennai
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation({ lat: latitude, lng: longitude });
-          setIsLoading(false);
-        },
-        (error) => {
-          console.warn("Location access denied. Using default location.");
-          setUserLocation({ lat: 13.0827, lng: 80.2707 }); // Chennai fallback
-          setIsLoading(false);
-          setShowDeniedWarning(true);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    } else {
-      setUserLocation({ lat: 13.0827, lng: 80.2707 });
+ useEffect(() => {
+  if (!navigator.geolocation) {
+    console.warn("Geolocation not supported.");
+    setUserLocation({ lat: 13.0827, lng: 80.2707 }); // Chennai fallback
+    setShowDeniedWarning(true);
+    setIsLoading(false);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
       setIsLoading(false);
+      console.log("✅ Location fetched:", latitude, longitude);
+    },
+    (error) => {
+      console.warn("❌ Location access denied or failed:", error.message);
+      setUserLocation({ lat: 13.0827, lng: 80.2707 }); // fallback
       setShowDeniedWarning(true);
+      setIsLoading(false);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
     }
-  }, []);
+  );
+}, []);
 
   const handleSearch = async () => {
     setIsLoading(true);
 
-    if (!userLocation || !query) {
-      setIsLoading(false);
-      return;
-    }
+   if (!query) {
+  alert("Please enter a search term.");
+  setIsLoading(false);
+  return;
+}
 
+if (!userLocation) {
+  alert("User location not available yet. Please wait or reload.");
+  setIsLoading(false);
+  return;
+}
     const radii = [2000, 5000, 10000, 25000, 50000, 100000];
     const fetched = new Map();
 

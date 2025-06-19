@@ -21,7 +21,7 @@ export default function MapComponent({ locations: { location, places } }) {
       </Marker>
 
       {places.map((p, idx) => (
-        <Marker key={idx} position={[p.lat, p.lon]} icon={markerIcon}>
+        <Marker key={idx} position={[p.lat, p.lng]} icon={markerIcon}>
           <Popup>{p.tags.name || "Unnamed"}</Popup>
         </Marker>
       ))}
