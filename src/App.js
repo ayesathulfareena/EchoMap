@@ -6,9 +6,10 @@ import MapComponent from "./MapComponent";
 import haversine from "./utils/haversine";
 
 export default function App() {
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState([]);
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  
   const [userLocation, setUserLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showDeniedWarning, setShowDeniedWarning] = useState(false);
