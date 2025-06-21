@@ -115,8 +115,8 @@ function App() {
 
       <div className="main-container">
         {userLocation && (
-          <MapComponent locations={{ location: userLocation, places }} />
-        )}
+  <MapComponent locations={{ location: userLocation, places }} query={query} />
+)}
 
         <NearbyResults
           places={places}
