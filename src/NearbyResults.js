@@ -4,7 +4,7 @@ import "./NearbyResults.css";
 const NearbyResults = ({ userLocation, searchQuery, onClose }) => {
   const [nearbyResults, setNearbyResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [searchRadius, setSearchRadius] = useState(2000); // meters
+  const [searchRadius, setSearchRadius] = useState(5000); // meters
 
   useEffect(() => {
     if (searchQuery && userLocation) {
@@ -15,7 +15,7 @@ const NearbyResults = ({ userLocation, searchQuery, onClose }) => {
   const fetchNearbyPlaces = async () => {
     setLoading(true);
     let resultsFound = [];
-    let radius = 2000; // Start with 2km
+    let radius = 5000; // Start with 2km
     const maxRadius = 50000; // Up to 50km
     const step = 5000; // Increase radius by 5km each time
 
