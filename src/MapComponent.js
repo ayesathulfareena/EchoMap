@@ -20,7 +20,12 @@ export default function MapComponent({ locations: { location, places }, query })
   if (!location) return <div className="map-loading">Loading map...</div>;
 
   return (
-    <MapContainer center={[location.lat, location.lon]} zoom={13} className="map">
+    <MapContainer center={[location.lat, location.lon]} zoom={13} className="map"
+     whenReady={(map) => {
+        map.target.on("click", () => {
+          if (onMapClick) onMapClick(); // 👈 close sidebar on any map click
+        });
+      }}>
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       {/* User Location */}

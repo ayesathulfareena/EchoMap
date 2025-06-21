@@ -115,7 +115,8 @@ function App() {
 
       <div className="main-container">
         {userLocation && (
-  <MapComponent locations={{ location: userLocation, places }} query={query} />
+  <MapComponent locations={{ location: userLocation, places }} query={query}
+  onMapClick={() => setIsSidebarOpen(false)} />
 )}
 
         <NearbyResults
