@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import SearchBar from "./SearchBar"; // you already have this
-import NearbyResults from "./NearbyResults";
+import NearbyResults from "./NearbyResults"; // you already have this
 import MapComponent from "./MapComponent";
 import haversine from "./utils/haversine";
 
