@@ -11,7 +11,7 @@ export default function SearchBar({ value, onChange, onSearch }) {
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSearch()}
       />
-      <button onClick={onSearch}>Search</button>
+      
     </div>
   );
 }

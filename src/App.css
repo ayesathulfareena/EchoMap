@@ -53,3 +53,8 @@ body, html, .app {
   border-radius:4px;
   cursor:pointer;
 }
+.leaflet-control-zoom {
+  top: 100px !important; /* moves below search bar */
+  right: 10px !important;
+  z-index: 1000;
+}
