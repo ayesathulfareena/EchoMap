@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import "./MapComponent.css";
 import L from "leaflet";
 
-// 👇 Helper to get emoji based on search
+// Emoji icon for query
 const getEmojiForQuery = (query) => {
   const q = query.toLowerCase();
   if (q.includes("restaurant")) return "🍽️";
@@ -16,16 +16,20 @@ const getEmojiForQuery = (query) => {
   return "📍";
 };
 
-export default function MapComponent({ locations: { location, places }, query }) {
+export default function MapComponent({ locations: { location, places }, query, onMapClick }) {
   if (!location) return <div className="map-loading">Loading map...</div>;
 
   return (
-    <MapContainer center={[location.lat, location.lon]} zoom={13} className="map"
-     whenReady={(map) => {
+    <MapContainer
+      center={[location.lat, location.lon]}
+      zoom={13}
+      className="map"
+      whenReady={(map) => {
         map.target.on("click", () => {
-          if (onMapClick) onMapClick(); // 👈 close sidebar on any map click
+          if (onMapClick) onMapClick();
         });
-      }}>
+      }}
+    >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       {/* User Location */}
@@ -33,7 +37,7 @@ export default function MapComponent({ locations: { location, places }, query })
         <Popup>Your Location</Popup>
       </Marker>
 
-      {/* Nearby Places with Emoji Pins */}
+      {/* Nearby Places */}
       {places.map((p, idx) => {
         const emojiIcon = L.divIcon({
           className: "custom-emoji-icon",
@@ -43,7 +47,8 @@ export default function MapComponent({ locations: { location, places }, query })
         return (
           <Marker key={idx} position={[p.lat, p.lon]} icon={emojiIcon}>
             <Popup>
-              <strong>{p.tags?.name || "Unnamed"}</strong><br />
+              <strong>{p.tags?.name || "Unnamed"}</strong>
+              <br />
               {p.distance} km away
             </Popup>
           </Marker>
