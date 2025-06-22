@@ -51,7 +51,7 @@ export default function MapComponent({ locations: { location, places }, query, o
 
       {/* User Location */}
       <Marker position={[location.lat, location.lon]}>
-        <Popup>Your Location</Popup>
+       
       </Marker>
 
       {/* Nearby Places */}
