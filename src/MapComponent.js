@@ -4,24 +4,18 @@ import "leaflet/dist/leaflet.css";
 import "./MapComponent.css";
 import L from "leaflet";
 
+// Import default marker images
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
+// Fix for missing marker icons in many React setups
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
 });
 
-const map = L.map('map').setView([yourLatitude, yourLongitude], 13);
-
-// Add OpenStreetMap tile layer
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
-
-// Add marker (just the pin, no label)
-L.marker([yourLatitude, yourLongitude]).addTo(map);
-// Emoji icon for query
+// Helper to get emoji based on search
 const getEmojiForQuery = (query) => {
   const q = query.toLowerCase();
   if (q.includes("restaurant")) return "🍽️";
@@ -43,18 +37,18 @@ export default function MapComponent({ locations: { location, places }, query, o
       className="map"
       whenReady={(map) => {
         map.target.on("click", () => {
-          if (onMapClick) onMapClick();
+          if (onMapClick) onMapClick(); // close sidebar on map click
         });
       }}
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      {/* User Location */}
+      {/* ✅ User Location with default Leaflet blue pin */}
       <Marker position={[location.lat, location.lon]}>
-       
+        <Popup>Your Location</Popup>
       </Marker>
 
-      {/* Nearby Places */}
+      {/* Nearby Places with Emoji Pins */}
       {places.map((p, idx) => {
         const emojiIcon = L.divIcon({
           className: "custom-emoji-icon",
