@@ -3,7 +3,13 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./MapComponent.css";
 import L from "leaflet";
+import iconUrl from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
 
+L.Icon.Default.mergeOptions({
+  iconUrl,
+  shadowUrl: iconShadow,
+});
 // Emoji icon for query
 const getEmojiForQuery = (query) => {
   const q = query.toLowerCase();
