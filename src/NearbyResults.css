@@ -6,7 +6,7 @@
   max-width: 300px;
   height: 100%;
   background: #fff;
-  z-index: 2000;
+  z-index: 1000;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
   transition: right 0.3s ease;
 }
@@ -48,7 +48,7 @@
   background: white;
   box-shadow: -2px 0 5px rgba(0,0,0,0.3);
   overflow-y: auto;
-  z-index: 999;
+  z-index: 1100;
   padding: 20px;
 }
 
@@ -73,4 +73,7 @@
   background: none;
   border: none;
   cursor: pointer;
+}
+.nearby-results {
+  margin-top: 60px; /* Adjust if needed to clear search bar */
 }
