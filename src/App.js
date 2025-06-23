@@ -57,7 +57,9 @@ function App() {
       const q = `
         [out:json][timeout:25];
         (
-         node[~".*"~"${query}",i](around:${rad},${userLocation.lat},${userLocation.lon});
+        node["name"~"${query}",i](around:${rad},${userLocation.lat},${userLocation.lon});
+node["leisure"="fitness_centre"](around:${rad},${userLocation.lat},${userLocation.lon});
+node["amenity"="gym"](around:${rad},${userLocation.lat},${userLocation.lon});
         );
         out body;
       `;
