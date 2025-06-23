@@ -63,11 +63,13 @@ function App() {
         );
         out body;
       `;
-
-      const res = await fetch("https://overpass-api.de/api/interpreter", {
-        method: "POST",
-        body: q,
-      });
+const res = await fetch("https://overpass-api.de/api/interpreter", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/x-www-form-urlencoded",
+  },
+  body: new URLSearchParams({ data: q }),
+});
       const data = await res.json();
 
       (data.elements || []).forEach((el) => {
