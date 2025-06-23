@@ -2,14 +2,8 @@ import React, { useState } from "react";
 import "./SearchBar.css";
 
 const suggestionsList = [
-  "Restaurant",
-  "Hotel",
-  "Gym",
-  "Pharmacy",
-  "School",
-  "Hospital",
-  "Cafe",
-  "Bank",
+  "Restaurant", "Hotel", "Gym", "Pharmacy",
+  "School", "Hospital", "Cafe", "Bank",
 ];
 
 export default function SearchBar({ value, onChange, onSearch }) {
@@ -37,21 +31,22 @@ export default function SearchBar({ value, onChange, onSearch }) {
           setShowSuggestions(true);
         }}
         onFocus={() => setShowSuggestions(true)}
-        onKeyDown={(e) => e.key === "Enter" && onSearch()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            onSearch();
+            setShowSuggestions(false); // 👈 Close suggestions on Enter
+          }
+        }}
       />
       {value && (
-        <button className="clear-btn" onClick={clearInput}>
-          ✖
-        </button>
+        <button className="clear-btn" onClick={clearInput}>✖</button>
       )}
       {showSuggestions && value && (
         <ul className="suggestions-list">
           {suggestionsList
             .filter((s) => s.toLowerCase().includes(value.toLowerCase()))
             .map((sug, idx) => (
-              <li key={idx} onClick={() => handleSelect(sug)}>
-                {sug}
-              </li>
+              <li key={idx} onClick={() => handleSelect(sug)}>{sug}</li>
             ))}
         </ul>
       )}
