@@ -1,6 +1,8 @@
 import React from "react";
 import "./NearbyResults.css";
 
+
+
 const NearbyResults = ({ places, isOpen, onClose, onSelect }) => {
   if (!isOpen) return null;
 
