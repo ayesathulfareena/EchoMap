@@ -4,9 +4,14 @@ import SearchBar from "./SearchBar";
 import NearbyResults from "./NearbyResults";
 import MapComponent from "./MapComponent";
 import haversine from "./utils/haversine";
+
+// ✨ NEW
+import SettingsView from "./SettingsView";
+import FavoriteView from "./FavoriteView";
+import NotesView from "./NotesView";
+
 const queryTagMap = {
-  
-    restaurant: ["amenity=restaurant"],
+  restaurant: ["amenity=restaurant"],
   cafe: ["amenity=cafe"],
   fastfood: ["amenity=fast_food"],
   bakery: ["shop=bakery"],
@@ -61,18 +66,16 @@ function isRelevant(place, query) {
   const tags = place.tags || {};
   const lowerQuery = query.toLowerCase();
   const tagList = queryTagMap[lowerQuery];
-
   if (tagList) {
     return tagList.some(tag => {
       const [key, value] = tag.split("=");
       return tags[key] === value;
     });
   }
-
-  // fallback: name includes query
   const name = tags.name?.toLowerCase() || "";
   return name.includes(lowerQuery);
 }
+
 function App() {
   const [query, setQuery] = useState("");
   const [places, setPlaces] = useState([]);
@@ -81,7 +84,11 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(true);
 
-  // 1️⃣ Ask for location access
+  // 👇 New UI state
+  const [showSettings, setShowSettings] = useState(false);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+
   useEffect(() => {
     if (!navigator.geolocation) {
       alert("Geolocation not supported");
@@ -92,7 +99,6 @@ function App() {
     setShowLocationPrompt(true);
   }, []);
 
-  // 2️⃣ Request location after user allows
   const requestLocation = () => {
     setShowLocationPrompt(false);
     setIsLoading(true);
@@ -113,87 +119,88 @@ function App() {
     );
   };
 
-  // 3️⃣ Handle Search
   const handleSearch = async () => {
-  if (!userLocation || !query) return;
-  setIsLoading(true);
+    if (!userLocation || !query) return;
+    setIsLoading(true);
+    const lowerQuery = query.toLowerCase();
+    const tags = queryTagMap[lowerQuery];
+    if (!tags) {
+      alert("Unknown place type.");
+      setIsLoading(false);
+      return;
+    }
+    const radii = [50000, 100000, 200000, 500000, 1000000];
+    const seen = new Map();
 
-  const lowerQuery = query.toLowerCase();
-  const tags = queryTagMap[lowerQuery];
+    for (let rad of radii) {
+      const overpassTags = tags.map(tag => {
+        const [key, value] = tag.split("=");
+        return `node["${key}"="${value}"](around:${rad},${userLocation.lat},${userLocation.lon});`;
+      }).join("\n");
 
-  if (!tags) {
-    alert("Unknown place type.");
-    setIsLoading(false);
-    return;
-  }
-
-  const radii = [50000, 100000, 200000, 500000, 1000000];
-  const seen = new Map();
-
-  for (let rad of radii) {
-    const overpassTags = tags.map(tag => {
-      const [key, value] = tag.split("=");
-      return `node["${key}"="${value}"](around:${rad},${userLocation.lat},${userLocation.lon});`;
-    }).join("\n");
-
-    const queryStr = `
-      [out:json][timeout:25];
-      (
-        ${overpassTags}
-      );
-      out body;
-    `;
-
-    const res = await fetch("https://overpass-api.de/api/interpreter", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({ data: queryStr }),
-    });
-
-    const data = await res.json();
-
-    (data.elements || []).forEach((el) => {
-      const key = el.lat + "_" + el.lon;
-      if (!seen.has(key)) {
-        const dist = haversine(
-          { lat: userLocation.lat, lon: userLocation.lon },
-          { lat: el.lat, lon: el.lon }
+      const queryStr = `
+        [out:json][timeout:25];
+        (
+          ${overpassTags}
         );
-        seen.set(key, {
-          lat: el.lat,
-          lon: el.lon,
-          tags: el.tags || {},
-          distance: dist,
-        });
-      }
-    });
+        out body;
+      `;
 
-    if (seen.size > 0) break;
-  }
+      const res = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ data: queryStr }),
+      });
 
-  const sorted = Array.from(seen.values())
-    .sort((a, b) => a.distance - b.distance)
-    .map((p) => ({ ...p, distance: p.distance.toFixed(2) }));
+      const data = await res.json();
+      (data.elements || []).forEach((el) => {
+        const key = el.lat + "_" + el.lon;
+        if (!seen.has(key)) {
+          const dist = haversine(
+            { lat: userLocation.lat, lon: userLocation.lon },
+            { lat: el.lat, lon: el.lon }
+          );
+          seen.set(key, {
+            lat: el.lat,
+            lon: el.lon,
+            tags: el.tags || {},
+            distance: dist,
+          });
+        }
+      });
 
-  const filtered = sorted.filter(place => isRelevant(place, query));
-  setPlaces(filtered);
-  setIsSidebarOpen(true);
-  setIsLoading(false);
-};
-   
+      if (seen.size > 0) break;
+    }
 
+    const sorted = Array.from(seen.values())
+      .sort((a, b) => a.distance - b.distance)
+      .map((p) => ({ ...p, distance: p.distance.toFixed(2) }));
+
+    const filtered = sorted.filter(place => isRelevant(place, query));
+    setPlaces(filtered);
+    setIsSidebarOpen(true);
+    setIsLoading(false);
+  };
 
   return (
     <div className="app">
+      {/* 🌐 Search bar stays on top */}
       <SearchBar value={query} onChange={setQuery} onSearch={handleSearch} />
+
+      {/* 🎯 NEW — 3-button panel */}
+      <div className="action-bar">
+        <button onClick={() => setShowFavorites(true)}>❤</button>
+        <button onClick={() => setShowNotes(true)}>📝</button>
+        <button onClick={() => setShowSettings(true)}>⚙</button>
+      </div>
 
       {showLocationPrompt && (
         <div className="location-warning-overlay">
           <div className="location-warning-modal">
             <h2>📍 Please enable your location</h2>
-            <p>Echo Map needs your location to show nearby places.</p>
+            <p>Nearli needs your location to show nearby places.</p>
             <button onClick={requestLocation}>OK</button>
           </div>
         </div>
@@ -211,14 +218,19 @@ function App() {
         />
       )}
 
-      <NearbyResults
-        places={places}
-        isOpen={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        onSelect={(place) =>
-          alert(`${place.tags.name || "Unnamed"} – ${place.distance} km`)
-        }
-      />
+     <NearbyResults
+  places={places}
+  isOpen={isSidebarOpen}
+  onClose={() => setIsSidebarOpen(false)}
+  onSelect={(place) =>
+    alert(`${place.tags.name || "Unnamed"} – ${place.distance} km`)
+  }
+/>
+
+      {/* 👇 Conditionally show each full-screen modal */}
+      {showSettings && <SettingsView onClose={() => setShowSettings(false)} />}
+      {showFavorites && <FavoriteView onClose={() => setShowFavorites(false)} />}
+      {showNotes && <NotesView onClose={() => setShowNotes(false)} />}
     </div>
   );
 }
