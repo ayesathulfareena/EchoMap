@@ -1,62 +1,40 @@
-import React, { useEffect, useState } from "react";
-import "./SettingsView.css";
+ import React, { useState, useEffect } from "react"; import "./SettingsView.css";
 
-function SettingsView({ onBack }) {
-  const [user, setUser] = useState({});
-  const [favorites, setFavorites] = useState([]);
-  const [notes, setNotes] = useState([]);
-  const [loginHistory, setLoginHistory] = useState([]);
-  const [recentSearches, setRecentSearches] = useState([]);
+export default function SettingsView({ onClose }) { const [user, setUser] = useState({ name: "", email: "" }); const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  useEffect(() => {
-    // Replace these with real API calls
-    fetch("/api/user/me").then(res => res.json()).then(setUser);
-    fetch("/api/favorite").then(res => res.json()).then(setFavorites);
-    fetch("/api/notes").then(res => res.json()).then(setNotes);
-    fetch("/api/login-history").then(res => res.json()).then(setLoginHistory);
-    fetch("/api/recent-searches").then(res => res.json()).then(setRecentSearches);
-  }, []);
+useEffect(() => { const token = localStorage.getItem("token"); if (token) { try { const base64Url = token.split('.')[1]; const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/'); const payload = JSON.parse(atob(base64)); setUser({ name: payload.name || "User", email: payload.sub }); } catch (e) { console.error("Invalid token", e); } } }, []);
 
-  return (
-    <div className="settings-view">
-      <button className="back-btn" onClick={onBack}>← Back</button>
-      <h2>👤 Profile</h2>
-      <p><strong>Username:</strong> {user.username}</p>
-      <p><strong>Email:</strong> {user.email}</p>
+function handleLogout() { localStorage.removeItem("token"); window.location.href = "/login"; }
 
-      <h3>❤ Favorites</h3>
-      <ul>
-        {favorites.map((fav, idx) => (
-          <li key={idx}>{fav.placeName}</li>
-        ))}
-      </ul>
+return ( <div className="settings-view"> <div className="header"> <h2>Settings ⚙</h2> <button onClick={onClose}>✖</button> </div>
 
-      <h3>📝 Notes</h3>
-      <ul>
-        {notes.map((note, idx) => (
-          <li key={idx}>
-            <strong>{note.placeName}</strong>: {note.text}
-          </li>
-        ))}
-      </ul>
+<div className="profile-info">
+    <h3>👤 Profile</h3>
+    <p><strong>Name:</strong> {user.name}</p>
+    <p><strong>Email:</strong> {user.email}</p>
+  </div>
 
-      <h3>🕓 Login History</h3>
-      <ul>
-        {loginHistory.map((entry, idx) => (
-          <li key={idx}>{entry.timestamp}</li>
-        ))}
-      </ul>
+  <div className="section">
+    <h3>📜 Login History</h3>
+    <p>Coming Soon...</p>
+  </div>
 
-      <h3>🔍 Recent Searches</h3>
-      <ul>
-        {recentSearches.map((search, idx) => (
-          <li key={idx}>{search.query}</li>
-        ))}
-      </ul>
+  <div className="section">
+    <button className="logout-btn" onClick={() => setShowLogoutConfirm(true)}>
+      🚪 Logout
+    </button>
+  </div>
 
-      <button className="logout-btn">🚪 Logout</button>
+  {showLogoutConfirm && (
+    <div className="modal-overlay">
+      <div className="modal">
+        <button className="close-btn" onClick={() => setShowLogoutConfirm(false)}>×</button>
+        <p>Do you want to log out from Nearli?</p>
+        <button className="confirm-btn" onClick={handleLogout}>OK</button>
+      </div>
     </div>
-  );
-}
+  )}
+</div>
 
-export default SettingsView;
+); 
+}

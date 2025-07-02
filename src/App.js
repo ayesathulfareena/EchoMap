@@ -5,7 +5,9 @@ import NearbyResults from "./NearbyResults";
 import MapComponent from "./MapComponent";
 import haversine from "./utils/haversine";
 
-// ✨ NEW
+
+
+import PinActionModel from './PinActionModel';
 import SettingsView from "./SettingsView";
 import FavoriteView from "./FavoriteView";
 import NotesView from "./NotesView";
@@ -83,8 +85,12 @@ function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showLocationPrompt, setShowLocationPrompt] = useState(true);
+  const [favorites, setFavorites] = useState([]);
+const [notes, setNotes] = useState([]);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+  const [showPinModal, setShowPinModal] = useState(false);
 
-  // 👇 New UI state
+  
   const [showSettings, setShowSettings] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
@@ -118,7 +124,16 @@ function App() {
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
+  const handleAddToFavorites = (place) => {
+  setFavorites(prev => [...prev, { ...place, date: new Date().toLocaleDateString() }]);
+  alert("Added to Favorites!");
+};
 
+const handleAddToNotes = (place) => {
+  setShowPinModal(false); // Close modal
+  setShowNotes(true);
+  // You can also pre-fill Notes with selected place data (optional enhancement)
+};
   const handleSearch = async () => {
     if (!userLocation || !query) return;
     setIsLoading(true);
@@ -186,15 +201,16 @@ function App() {
 
   return (
     <div className="app">
+      
+      {/* 🎯 NEW — 3-button panel */}
+      <div className="action-bar">
+        <button onClick={() => setShowFavorites(true)}>{"❤"}</button>
+        <button onClick={() => setShowNotes(true)}>{"📝"}</button>
+        <button onClick={() => setShowSettings(true)}>{"⚙"}</button>
+      </div>
       {/* 🌐 Search bar stays on top */}
       <SearchBar value={query} onChange={setQuery} onSearch={handleSearch} />
 
-      {/* 🎯 NEW — 3-button panel */}
-      <div className="action-bar">
-        <button onClick={() => setShowFavorites(true)}>❤</button>
-        <button onClick={() => setShowNotes(true)}>📝</button>
-        <button onClick={() => setShowSettings(true)}>⚙</button>
-      </div>
 
       {showLocationPrompt && (
         <div className="location-warning-overlay">
@@ -211,11 +227,15 @@ function App() {
       )}
 
       {userLocation && (
-        <MapComponent
-          locations={{ location: userLocation, places }}
-          query={query}
-          onMapClick={() => setIsSidebarOpen(false)}
-        />
+       <MapComponent
+  locations={{ location: userLocation, places }}
+  query={query}
+  onMapClick={() => setIsSidebarOpen(false)}
+  onPlaceClick={(place) => {
+    setSelectedPlace(place);
+    setShowPinModal(true);
+  }}
+/>
       )}
 
      <NearbyResults
@@ -231,6 +251,21 @@ function App() {
       {showSettings && <SettingsView onClose={() => setShowSettings(false)} />}
       {showFavorites && <FavoriteView onClose={() => setShowFavorites(false)} />}
       {showNotes && <NotesView onClose={() => setShowNotes(false)} />}
+      
+ 
+    {showPinModal && selectedPlace && (
+  <PinActionModel
+    place={selectedPlace}
+    onClose={() => {
+      setSelectedPlace(null);
+      setShowPinModal(false);
+    }}
+    onAddToFavorites={handleAddToFavorites}
+    onAddToNotes={handleAddToNotes}
+  />
+)}
+
+
     </div>
   );
 }

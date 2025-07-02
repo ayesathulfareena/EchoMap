@@ -58,3 +58,61 @@ body, html, .app {
   right: 10px !important;
   z-index: 1000;
 }
+.action-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #ffffffee; /* optional: slightly see-through */
+  padding: 10px 0;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.search-bar {
+  margin-top: 70px; /* or adjust as needed */
+}
+.action-bar button {
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.action-bar button:hover {
+  transform: scale(1.2);
+}
+.action-bar button {
+  font-size: 24px;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+/* In App.css or your global CSS */
+.action-bar {
+  position: absolute;
+  top: 10px; /* Moves it to top */
+  left: 10px;
+  z-index: 1000; /* Ensure it's on top of search bar */
+  display: flex;
+  gap: 10px;
+  background: white;
+  padding: 4px 8px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-bar button {
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  color: black; /* Ensure emojis are visible */
+}
