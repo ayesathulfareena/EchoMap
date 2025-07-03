@@ -16,7 +16,7 @@ export default function Login() {
       console.log("Decoded user info:", userInfo);
 
       // 🔁 Replace with your backend URL if deployed
-      const backendUrl = "http://localhost:8080/api/login";
+      const backendUrl = "http://localhost:8080/api/auth/google-login";
 
       const res = await fetch(backendUrl, {
         method: "POST",

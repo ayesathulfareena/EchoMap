@@ -12,6 +12,20 @@ import SettingsView from "./SettingsView";
 import FavoriteView from "./FavoriteView";
 import NotesView from "./NotesView";
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LoginPage from "./LoginPage";
+
+
+    
+ 
+
+
+<GoogleOAuthProvider clientId="21797402170-0vhnqk39l8isiq4t1933uejkk5p0lc7c.apps.googleusercontent.com
+">
+  <App />
+</GoogleOAuthProvider>
 const queryTagMap = {
   restaurant: ["amenity=restaurant"],
   cafe: ["amenity=cafe"],
@@ -264,7 +278,13 @@ const handleAddToNotes = (place) => {
     onAddToNotes={handleAddToNotes}
   />
 )}
-
+ <BrowserRouter>
+  <Routes>
+    <Route path="/" element={<Home />} />
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
+  </Routes>
+</BrowserRouter>
 
     </div>
   );
